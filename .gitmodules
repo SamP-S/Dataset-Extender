@@ -1,0 +1,3 @@
+[submodule "ocve"]
+	path = ocve
+	url = git@github.com:SamP-S/OpenCV_Extended.git
