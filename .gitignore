@@ -1,5 +1,8 @@
 # Custon directory
 data
+*.ini
+*.cfg
+.benchmarks
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
