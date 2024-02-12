@@ -8,15 +8,25 @@ sys.path.append(OCVE_DIR)
 print("OCVE_DIR:", OCVE_DIR)
 import ocve
 
-def recurisve_dir_search(path):
+CONFIG = configparser.ConfigParser()
+PWD = os.getcwd()
+
+def apply_randomisation():
     pass
 
-if __name__ == "__main__":
-    PWD = os.getcwd()
-    config = configparser.ConfigParser()
+def recurisve_dir_search(path):
+    for (root, dirs, files) in os.walk(path):
+        for dir in dirs:
+            recurisve_dir_search(os.path.join(root, dir))
+        for file in files:
+            print(os.path.join(root, file))
 
-    config["DEFAULT"] = {
-        "root_data": os.path.join(PWD, "data"),
+def load_cfg():
+    CONFIG.read("sample.ini")
+
+def save_cfg():
+    CONFIG["DEFAULT"] = {
+        "brick_data_dir": os.path.join(PWD, "data/bricks/joosthazelzet"),
         "out_width": "600",
         "out_height": "600",
         "scale_min": "0.5",
@@ -28,6 +38,14 @@ if __name__ == "__main__":
         "guassian_std": "",
         "": "",
     }
-
     with open("sample.ini", "w") as configfile:
-        config.write(configfile)
+        CONFIG.write(configfile)
+
+def main():
+    save_cfg()
+    load_cfg()
+    recurisve_dir_search(CONFIG["DEFAULT"]["brick_data_dir"])
+    # save_cfg()
+
+if __name__ == "__main__":
+    main()
