@@ -11,15 +11,21 @@ import ocve
 CONFIG = configparser.ConfigParser()
 PWD = os.getcwd()
 
-def apply_randomisation():
+def apply_transform(in_path, out_path):
     pass
-
-def recurisve_dir_search(path):
-    for (root, dirs, files) in os.walk(path):
+    # print("IN:", in_path)
+    # print("OUT:", out_path)
+            
+def dir_search(in_dir, out_dir):
+    os.mkdir(out_dir)
+    for (root, dirs, files) in os.walk(in_dir):
         for dir in dirs:
-            recurisve_dir_search(os.path.join(root, dir))
+            os.mkdir(os.path.join(out_dir, dir))
         for file in files:
-            print(os.path.join(root, file))
+            rel_path = os.path.join(os.path.basename(root), file)
+            in_path = os.path.join(root, file)
+            out_path = os.path.join(out_dir, rel_path)
+            apply_transform(in_path, out_path)
 
 def load_cfg():
     CONFIG.read("sample.ini")
@@ -27,6 +33,7 @@ def load_cfg():
 def save_cfg():
     CONFIG["DEFAULT"] = {
         "brick_data_dir": os.path.join(PWD, "data/bricks/joosthazelzet"),
+        "output_data_dir": os.path.join(PWD, "data/output"),
         "out_width": "600",
         "out_height": "600",
         "scale_min": "0.5",
@@ -44,7 +51,8 @@ def save_cfg():
 def main():
     save_cfg()
     load_cfg()
-    recurisve_dir_search(CONFIG["DEFAULT"]["brick_data_dir"])
+    profile = CONFIG["DEFAULT"]
+    dir_search(profile["brick_data_dir"], profile["output_data_dir"])
     # save_cfg()
 
 if __name__ == "__main__":
