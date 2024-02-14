@@ -9,18 +9,28 @@ print("OCVE_DIR:", OCVE_DIR)
 import ocve
 
 CONFIG = configparser.ConfigParser()
+PROFILE = CONFIG["DEFAULT"]
 PWD = os.getcwd()
 
 def apply_transform(in_path, out_path):
-    pass
+    img = ocve.read_img(in_path)
+    img = ocve.gaussian_noise(
+        img,
+        strength=1,
+        mean=0,
+        variance=400)
+    ocve.save_img(out_path, img)
     # print("IN:", in_path)
     # print("OUT:", out_path)
             
 def dir_search(in_dir, out_dir):
-    os.mkdir(out_dir)
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
     for (root, dirs, files) in os.walk(in_dir):
         for dir in dirs:
-            os.mkdir(os.path.join(out_dir, dir))
+            class_dir = os.path.join(out_dir, dir)
+            if not os.path.exists(class_dir):
+                os.mkdir(class_dir)
         for file in files:
             rel_path = os.path.join(os.path.basename(root), file)
             in_path = os.path.join(root, file)
@@ -41,8 +51,8 @@ def save_cfg():
         "scale_ratio_min": "0.5",
         "scale_ratio_max": "2",
         "s&p_strength": "0.05",
-        "guassian_mean": "",
-        "guassian_std": "",
+        "guassian_mean": "0.5",
+        "guassian_std": "0.05",
         "": "",
     }
     with open("sample.ini", "w") as configfile:
@@ -51,8 +61,8 @@ def save_cfg():
 def main():
     save_cfg()
     load_cfg()
-    profile = CONFIG["DEFAULT"]
-    dir_search(profile["brick_data_dir"], profile["output_data_dir"])
+    
+    dir_search(PROFILE["brick_data_dir"], PROFILE["output_data_dir"])
     # save_cfg()
 
 if __name__ == "__main__":
