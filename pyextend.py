@@ -22,10 +22,13 @@ DIR_COUNT = 0
 FILE_COUNT = 0
 
 BACKGROUND_DF = pd.read_csv("data/unsplash/photos.tsv000", delimiter="\t")
+
 IMG_URLS = BACKGROUND_DF["photo_image_url"]
 OUTPUT_RES = (600, 600)
 
 def apply_transform(in_path, out_path):
+    print(f"DEBUG: Generating @ {out_path}")
+
     # convert to RGBA
     img = ocve.read_img(in_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
@@ -34,12 +37,18 @@ def apply_transform(in_path, out_path):
     # plt.show()
     
     # background image, try 3 times
-    for i in range(3):
+    for i in range(5):
+        print(f"attempt {i}")
+        t = time.time()
         try:
+            # TODO:
+            # add bg img size check to prevent large images wasting time
             bg_url = IMG_URLS[int(random.random() * len(IMG_URLS))]
             with urllib.request.urlopen(bg_url) as url_response:
                 img_array = np.asarray(bytearray(url_response.read()), dtype=np.uint8)
             bg = cv2.imdecode(img_array, -1)
+            print(f"Image streamed @ {time.time() - t}")
+            t = time.time()
             
             w, h = OUTPUT_RES
             x = int(random.random() * (bg.shape[0] - w))
@@ -47,10 +56,20 @@ def apply_transform(in_path, out_path):
             bg = bg[y:y+h, x:x+w]
             bg = cv2.cvtColor(bg, cv2.COLOR_BGR2BGRA)
             
+            blur_k_min = int(PROFILE["bg_blur_min"])
+            blur_k_max = int(PROFILE["bg_blur_max"])
+            k = random.randint(blur_k_min, blur_k_max)
+            if (k <= 1):
+                if k % 2 == 0:
+                    k += 1
+                bg = cv2.blur(bg, (k, k))
+            
             # mix
             x_sub = int(random.random() * (w - img.shape[0]))
             y_sub = int(random.random() * (h - img.shape[1]))
             img = ocve.insert_image(bg, img, x_sub, y_sub)
+            print(f"Insert img @ {time.time() - t}")
+            t = time.time()
             
             break
         except Exception as e:
@@ -64,7 +83,20 @@ def apply_transform(in_path, out_path):
         variance=800)
     img = ocve.poisson_noise(img)
     img = ocve.salt_pepper_noise(img, freq=0.02, b_w=True)
+    print(f"Noise added @ {time.time() - t}")
+    t = time.time()
+    
+    # flip on x
+    if (random.randint(0, 1)):
+        img = cv2.flip(img, 0)
+    # flip on y
+    if (random.randint(0, 1)):
+        img = cv2.flip(img, 1)
+    
     ocve.save_img(out_path, img)
+    print(f"Save img @ {time.time() - t}")
+    t = time.time()
+    print("\n\n")
             
 def dir_search(in_dir, out_dir):
     global DIR_COUNT, FILE_COUNT
@@ -99,7 +131,8 @@ def save_cfg():
         "s&p_strength": "0.05",
         "guassian_mean": "0.5",
         "guassian_std": "0.05",
-        "": "",
+        "bg_blur_min": "0",
+        "bg_blur_max": "5"
     }
     with open("sample.ini", "w") as configfile:
         CONFIG.write(configfile)
