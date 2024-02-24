@@ -22,8 +22,9 @@ DIR_COUNT = 0
 FILE_COUNT = 0
 
 BACKGROUND_DF = pd.read_csv("data/unsplash/photos.tsv000", delimiter="\t")
-
-IMG_URLS = BACKGROUND_DF["photo_image_url"]
+BG_WIDTHS = BACKGROUND_DF["photo_width"]
+BG_HEIGHTS = BACKGROUND_DF["photo_height"]
+BG_URLS = BACKGROUND_DF["photo_image_url"]
 OUTPUT_RES = (600, 600)
 
 def apply_transform(in_path, out_path):
@@ -37,13 +38,16 @@ def apply_transform(in_path, out_path):
     # plt.show()
     
     # background image, try 3 times
-    for i in range(5):
-        print(f"attempt {i}")
+    for i in range(10):
         t = time.time()
         try:
             # TODO:
             # add bg img size check to prevent large images wasting time
-            bg_url = IMG_URLS[int(random.random() * len(IMG_URLS))]
+            img_idx = int(random.random() * len(BG_URLS))
+            print(f"attempt {i}: ({BG_WIDTHS[img_idx]},{BG_HEIGHTS[img_idx]}) @ {BG_URLS[img_idx]}")
+            if BG_WIDTHS[img_idx] > 4000 and BG_HEIGHTS[img_idx] > 4000:
+                continue
+            bg_url = BG_URLS[img_idx]
             with urllib.request.urlopen(bg_url) as url_response:
                 img_array = np.asarray(bytearray(url_response.read()), dtype=np.uint8)
             bg = cv2.imdecode(img_array, -1)
@@ -76,11 +80,17 @@ def apply_transform(in_path, out_path):
             print(f"ERROR: Background image url stream broke ({i}) @ {e}")
      
     # add noise
+    g_min = float(PROFILE["gaussian_strength_min"])
+    g_max = float(PROFILE["gaussian_strength_max"])
+    g_strength = (random.random() * (g_max - g_min)) + float(g_min)
+    g_std_min = float(PROFILE["gaussian_std_min"])
+    g_std_max = float(PROFILE["gaussian_std_max"])
+    g_std = (random.random() * (g_std_max - g_std_min)) + float(g_std_min)
     img = ocve.gaussian_noise(
         img,
-        strength=0.8,
+        strength=g_strength,
         mean=0,
-        variance=800)
+        std=g_std)
     img = ocve.poisson_noise(img)
     img = ocve.salt_pepper_noise(img, freq=0.02, b_w=True)
     print(f"Noise added @ {time.time() - t}")
@@ -120,19 +130,30 @@ def load_cfg():
 
 def save_cfg():
     CONFIG["DEFAULT"] = {
+        # input data
         "brick_data_dir": os.path.join(PWD, "data/bricks/v6"),
         "output_data_dir": os.path.join(PWD, "data/output"),
-        "out_width": "300",
-        "out_height": "300",
-        "scale_min": "0.5",
-        "scale_max": "0.8",
-        "scale_ratio_min": "0.7",
-        "scale_ratio_max": "1.5",
+        
+        # image composition
+        "bg_subset_width": "600",
+        "bg_subset_height": "600",
+        "brick_ar_min": "0.5",
+        "brick_ar_max": "2",
+        "brick_scale_min": "0.3",
+        "brick_scale_max": "1.0",
+        
+        # post processing noise
         "s&p_strength": "0.05",
-        "guassian_mean": "0.5",
-        "guassian_std": "0.05",
+        "gaussian_strength_min": "0.0",
+        "gaussian_strength_max": "1.0",
+        "gaussian_std_min": "10",
+        "gaussian_std_max": "25",
         "bg_blur_min": "0",
-        "bg_blur_max": "5"
+        "bg_blur_max": "5",
+        
+        # output resolution (ai expects: 224 x 224 x 3)
+        "out_width": "600",
+        "out_height": "600",
     }
     with open("sample.ini", "w") as configfile:
         CONFIG.write(configfile)
