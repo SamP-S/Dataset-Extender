@@ -6,7 +6,7 @@ import urllib
 import numpy as np
 import cv2
 
-def setup_unsplash():
+def setup_unsplash(num_photos=1000):
     
     # img data paths
     data_path = "data"
@@ -46,7 +46,6 @@ def setup_unsplash():
     if len(os.listdir(imgs_path)) == 0:
         print("DEBUG: images not found locally - downloading")
         timeout = 20
-        num_photos = 1000
         u_df = pd.read_csv(df_path, delimiter="\t")
         print(f"INFO: unsplash dataset contains {u_df.shape[0]} images")
         print(f"INFO: attepting to download subset of {num_photos}")
@@ -62,17 +61,17 @@ def setup_unsplash():
                         f.write(url_response.read())
                 
             except urllib.error.URLError as e:
-                print(f"DEBUG: server timeout ({w},{h}) @ {url}")
+                print(f"DEBUG: {idx}/{num_photos} server timeout ({w},{h}) @ {url}")
             except Exception as e:
-                print(f"WARNING: unexpected error - {e}")
+                print(f"WARNING: {idx}/{num_photos} unexpected error - {e}")
                 
-            print(f"DEBUG: downloaded ({w},{h}) @ {url}")
+            print(f"DEBUG: {idx}/{num_photos} downloaded ({w},{h}) @ {url}")
             
             # stop once limit reached, save memory
             if idx == num_photos:
                 break
     else:
-        print("DEBUG: images found locally - skipping download")
+        print("DEBUG: files found locally - skipping download")
         
 if __name__ == "__main__":
     setup_unsplash()
