@@ -24,7 +24,7 @@ DIR_COUNT = 0
 FILE_COUNT = 0
 
 # download background images
-# setup_unsplash()
+setup_unsplash()
 
 def grab_sub_image(img, w, h):
     max_x = img.shape[0] - w

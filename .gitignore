@@ -1,5 +1,5 @@
 # Custon directory
-data/
+data
 *.ini
 *.cfg
 .benchmarks
