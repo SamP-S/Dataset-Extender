@@ -45,7 +45,7 @@ def setup_unsplash():
     
     if len(os.listdir(imgs_path)) == 0:
         print("DEBUG: images not found locally - downloading")
-        timeout = 5
+        timeout = 20
         num_photos = 1000
         u_df = pd.read_csv(df_path, delimiter="\t")
         print(f"INFO: unsplash dataset contains {u_df.shape[0]} images")
@@ -68,8 +68,8 @@ def setup_unsplash():
                 
             print(f"DEBUG: downloaded ({w},{h}) @ {url}")
             
-            # safe quit for testing
-            if idx == 100:
+            # stop once limit reached, save memory
+            if idx == num_photos:
                 break
     else:
         print("DEBUG: images found locally - skipping download")
