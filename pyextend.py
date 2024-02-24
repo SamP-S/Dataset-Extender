@@ -8,6 +8,8 @@ import cv2
 import urllib.request
 import numpy as np
 import matplotlib.pyplot as plt
+from setup_env import setup_unsplash
+import copy
 
 # import ocve
 OCVE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "ocve"))
@@ -21,63 +23,57 @@ PWD = os.getcwd()
 DIR_COUNT = 0
 FILE_COUNT = 0
 
-BACKGROUND_DF = pd.read_csv("data/unsplash/photos.tsv000", delimiter="\t")
-BG_WIDTHS = BACKGROUND_DF["photo_width"]
-BG_HEIGHTS = BACKGROUND_DF["photo_height"]
-BG_URLS = BACKGROUND_DF["photo_image_url"]
-OUTPUT_RES = (600, 600)
+# download background images
+# setup_unsplash()
+
+def grab_sub_image(img, w, h):
+    max_x = img.shape[0] - w
+    max_y = img.shape[1] - h
+    x = random.randint(0, max_x)
+    y = random.randint(0, max_y)
+    return img[x:x+w, y:y+h]
 
 def apply_transform(in_path, out_path):
     print(f"DEBUG: Generating @ {out_path}")
+    
+    t = time.time()
 
     # convert to RGBA
     img = ocve.read_img(in_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
     img = ocve.colour_filter(img, (70, 70, 70, 255), (72, 72, 72, 255))
-    # plt.imshow(img)
-    # plt.show()
     
-    # background image, try 3 times
-    for i in range(10):
-        t = time.time()
-        try:
-            # TODO:
-            # add bg img size check to prevent large images wasting time
-            img_idx = int(random.random() * len(BG_URLS))
-            print(f"attempt {i}: ({BG_WIDTHS[img_idx]},{BG_HEIGHTS[img_idx]}) @ {BG_URLS[img_idx]}")
-            if BG_WIDTHS[img_idx] > 4000 and BG_HEIGHTS[img_idx] > 4000:
-                continue
-            bg_url = BG_URLS[img_idx]
-            with urllib.request.urlopen(bg_url) as url_response:
-                img_array = np.asarray(bytearray(url_response.read()), dtype=np.uint8)
-            bg = cv2.imdecode(img_array, -1)
-            print(f"Image streamed @ {time.time() - t}")
-            t = time.time()
-            
-            w, h = OUTPUT_RES
-            x = int(random.random() * (bg.shape[0] - w))
-            y = int(random.random() * (bg.shape[1] - h))
-            bg = bg[y:y+h, x:x+w]
-            bg = cv2.cvtColor(bg, cv2.COLOR_BGR2BGRA)
-            
-            blur_k_min = int(PROFILE["bg_blur_min"])
-            blur_k_max = int(PROFILE["bg_blur_max"])
-            k = random.randint(blur_k_min, blur_k_max)
-            if (k <= 1):
-                if k % 2 == 0:
-                    k += 1
-                bg = cv2.blur(bg, (k, k))
-            
-            # mix
-            x_sub = int(random.random() * (w - img.shape[0]))
-            y_sub = int(random.random() * (h - img.shape[1]))
-            img = ocve.insert_image(bg, img, x_sub, y_sub)
-            print(f"Insert img @ {time.time() - t}")
-            t = time.time()
-            
-            break
-        except Exception as e:
-            print(f"ERROR: Background image url stream broke ({i}) @ {e}")
+    print(f"img load {time.time() - t}")
+    
+    # load bg
+    bg_filename = random.choice(os.listdir("data/unsplash"))
+    bg_path = os.path.join("data/unsplash", bg_filename)
+    bg_img = ocve.read_img(bg_path)
+    bg = copy.deepcopy(bg_img)
+    print(f"bg load {time.time() - t}")
+    
+    # bg grab sub img
+    out_w = int(PROFILE["out_width"])
+    out_h = int(PROFILE["out_height"])
+    bg = grab_sub_image(bg, out_w, out_h)
+    bg = cv2.cvtColor(bg, cv2.COLOR_BGR2BGRA)
+    print(f"bg sub img {time.time() - t}")
+    
+    # bg blur
+    blur_k_min = int(PROFILE["bg_blur_min"])
+    blur_k_max = int(PROFILE["bg_blur_max"])
+    k = random.randint(blur_k_min, blur_k_max)
+    if (k <= 1):
+        if k % 2 == 0:
+            k += 1
+        bg = cv2.blur(bg, (k, k))
+    print(f"bg blur {time.time() - t}")
+    
+    # overlay brick over bg
+    x_sub = random.randint(0, bg.shape[0] - img.shape[0])
+    y_sub = random.randint(0, bg.shape[1] - img.shape[1])
+    img = ocve.insert_image(bg, img, x_sub, y_sub)
+    print(f"insert brick {time.time() - t}")
      
     # add noise
     g_min = float(PROFILE["gaussian_strength_min"])
@@ -93,8 +89,6 @@ def apply_transform(in_path, out_path):
         std=g_std)
     img = ocve.poisson_noise(img)
     img = ocve.salt_pepper_noise(img, freq=0.02, b_w=True)
-    print(f"Noise added @ {time.time() - t}")
-    t = time.time()
     
     # flip on x
     if (random.randint(0, 1)):
@@ -104,9 +98,6 @@ def apply_transform(in_path, out_path):
         img = cv2.flip(img, 1)
     
     ocve.save_img(out_path, img)
-    print(f"Save img @ {time.time() - t}")
-    t = time.time()
-    print("\n\n")
             
 def dir_search(in_dir, out_dir):
     global DIR_COUNT, FILE_COUNT
@@ -135,8 +126,6 @@ def save_cfg():
         "output_data_dir": os.path.join(PWD, "data/output"),
         
         # image composition
-        "bg_subset_width": "600",
-        "bg_subset_height": "600",
         "brick_ar_min": "0.5",
         "brick_ar_max": "2",
         "brick_scale_min": "0.3",
