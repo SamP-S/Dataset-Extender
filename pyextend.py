@@ -111,10 +111,13 @@ def dir_search(in_dir, out_dir):
                 os.mkdir(class_dir)
         for file in files:
             FILE_COUNT += 1
-            rel_path = os.path.join(os.path.basename(root), file)
+            base, ext = os.path.splitext(file)
+            rel_dir = os.path.basename(root) 
             in_path = os.path.join(root, file)
-            out_path = os.path.join(out_dir, rel_path)
-            apply_transform(in_path, out_path)
+            for i in range(int(PROFILE["gens_per_base"])):
+                filename = base + f"_{i}" + ext
+                out_path = os.path.join(out_dir, rel_dir, filename)
+                apply_transform(in_path, out_path)
 
 def load_cfg():
     CONFIG.read("sample.ini")
@@ -122,8 +125,9 @@ def load_cfg():
 def save_cfg():
     CONFIG["DEFAULT"] = {
         # input data
-        "brick_data_dir": os.path.join(PWD, "data/bricks/v6"),
+        "brick_data_dir": os.path.join(PWD, "data/bricks/26_bricks"),
         "output_data_dir": os.path.join(PWD, "data/output"),
+        "gens_per_base": "10",
         
         # image composition
         "brick_ar_min": "0.5",
