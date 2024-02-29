@@ -46,15 +46,19 @@ def apply_transform(in_path, out_path):
     print(f"img load {time.time() - t}")
     
     # load bg
-    bg_filename = random.choice(os.listdir("data/unsplash"))
-    bg_path = os.path.join("data/unsplash", bg_filename)
-    bg_img = ocve.read_img(bg_path)
+    out_w = int(PROFILE["out_width"])
+    out_h = int(PROFILE["out_height"])
+    while True:
+        bg_filename = random.choice(os.listdir("data/unsplash"))
+        bg_path = os.path.join("data/unsplash", bg_filename)
+        bg_img = ocve.read_img(bg_path)
+        if bg_img.shape[0] >= out_w and bg_img.shape[1] >= out_h:
+            break
+            
     bg = copy.deepcopy(bg_img)
     print(f"bg load {time.time() - t}")
     
     # bg grab sub img
-    out_w = int(PROFILE["out_width"])
-    out_h = int(PROFILE["out_height"])
     bg = grab_sub_image(bg, out_w, out_h)
     bg = cv2.cvtColor(bg, cv2.COLOR_BGR2BGRA)
     print(f"bg sub img {time.time() - t}")
