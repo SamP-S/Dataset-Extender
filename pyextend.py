@@ -95,7 +95,6 @@ def post_processing(img):
         strength=g_strength,
         mean=0,
         std=g_std)
-    img = ocve.poisson_noise(img)
     img = ocve.salt_pepper_noise(img, freq=0.02, b_w=True)
     
     # flip on axis
