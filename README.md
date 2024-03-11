@@ -12,3 +12,8 @@
 - [x] Upscale/Downscale
 - [x] Blur
 
+- [ ] Brightness
+- [ ] Contrast
+- [ ] Chromatic Aberration
+- [ ] Colour Shift
+
