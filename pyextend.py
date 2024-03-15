@@ -8,13 +8,10 @@ import cv2
 import urllib.request
 import numpy as np
 import matplotlib.pyplot as plt
-from setup_env import setup_unsplash
 import copy
 
-# import ocve
-OCVE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "ocve"))
-sys.path.append(OCVE_DIR)
-import ocve
+from functions import *
+from setup_env import setup_unsplash
 
 DIR_COUNT = 0
 FILE_COUNT = 0
@@ -23,7 +20,7 @@ FILE_COUNT = 0
 setup_unsplash()
 
 def load_brick(brick_path):
-    img = ocve.read_img(brick_path)
+    img = read_img(brick_path)
 
     out_w = int(CONFIG["GENERAL"]["out_width"])
     out_h = int(CONFIG["GENERAL"]["out_height"])
@@ -49,7 +46,7 @@ def load_brick(brick_path):
 
     img = cv2.resize(img, (brick_w, brick_h))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
-    img = ocve.colour_filter(img, (70, 70, 70, 255), (72, 72, 72, 255))
+    img = colour_filter(img, (70, 70, 70, 255), (72, 72, 72, 255))
     return img
 
 def load_background():
@@ -60,12 +57,12 @@ def load_background():
     out_w = int(CONFIG["GENERAL"]["out_width"])
     out_h = int(CONFIG["GENERAL"]["out_height"])
 
-    img = ocve.read_img(bg_path)
+    img = read_img(bg_path)
     if img.shape[0] < out_w or img.shape[1] < out_h:
         img = cv2.resize(img, img.shape*2)
     
     # subset image
-    img = ocve.random_sub_image(img, out_w, out_h)
+    img = random_sub_image(img, out_w, out_h)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
 
     # bg blur
@@ -89,7 +86,7 @@ def post_processing(img):
         g_std_min = float(CONFIG["POSTPROCESS"]["gaussian_std_min"])
         g_std_max = float(CONFIG["POSTPROCESS"]["gaussian_std_max"])
         g_std = (r.random() * (g_std_max - g_std_min)) + g_std_min
-        img = ocve.gaussian_noise(
+        img = gaussian_noise(
             img,
             strength=g_strength,
             mean=0,
@@ -97,11 +94,11 @@ def post_processing(img):
         
     if int(CONFIG["POSTPROCESS"]["sp_bw_noise"]):
         freq = int(CONFIG["POSTPROCESS"]["sp_bw_frequency"])
-        img = ocve.salt_pepper_noise(img, freq=freq, b_w=True)
+        img = salt_pepper_noise(img, freq=freq, b_w=True)
         
     if int(CONFIG["POSTPROCESS"]["sp_rgb_noise"]):
         freq = int(CONFIG["POSTPROCESS"]["sp_rgb_frequency"])
-        img = ocve.salt_pepper_noise(img, freq=freq, b_w=False)
+        img = salt_pepper_noise(img, freq=freq, b_w=False)
     
     if int(CONFIG["POSTPROCESS"]["mirroring"]):
         if (r.randint(0, 1)):
@@ -116,9 +113,9 @@ def apply_transform(in_path, out_path):
     img = load_brick(in_path)
     bg = load_background()
     
-    img = ocve.random_insert_image(bg, img)
+    img = random_insert_image(bg, img)
     img = post_processing(img)
-    ocve.save_img(out_path, img)
+    save_img(out_path, img)
             
 def dir_search(in_dir, out_dir):
     global DIR_COUNT, FILE_COUNT
