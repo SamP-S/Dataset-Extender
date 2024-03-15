@@ -68,13 +68,13 @@ def colour_histogram(img):
 
 def brightness(img, factor):
     result = img.copy()
-    result += factor
+    result = result + np.uint8(factor)
     return result
 
 def contrast(img, factor):
     result = img.copy()
-    result *= factor
-    return result
+    result = result * factor
+    return result.astype(dtype=np.uint8)
 
 # image transforms
 def rotate(img, rot):
@@ -130,6 +130,7 @@ def random_sub_image(img, w, h):
     max_y = img.shape[1] - h
     x = random.randint(0, max_x)
     y = random.randint(0, max_y)
+    print(type(img), img.shape)
     return img[x:x+w, y:y+h]
 
 def random_insert_image(img, img2):
@@ -139,8 +140,8 @@ def random_insert_image(img, img2):
     x = random.randint(0, img.shape[0] - img2.shape[0])
     y = random.randint(0, img.shape[1] - img2.shape[1])
     result = np.copy(img)
-    img_subset = img[y: y + img2.shape[1], x: x + img2.shape[0]]
-    result[y: y + img2.shape[1], x: x + img2.shape[0]] = blend_images(img_subset, img2)
+    img_subset = img[x: x + img2.shape[0], y: y + img2.shape[1]]
+    result[x: x + img2.shape[0], y: y + img2.shape[1]] = blend_images(img_subset, img2)
     return result
 
 def blend_images(img, img2):
