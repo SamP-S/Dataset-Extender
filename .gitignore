@@ -1,7 +1,5 @@
 # Custon directory
 data
-*.ini
-*.cfg
 .benchmarks
 unsplash/
 
