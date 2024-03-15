@@ -10,7 +10,7 @@ def setup_unsplash(path_bg, path_csv, num_photos=1000):
       
     # unsplash db paths
     zip_filename = "unsplash_lite.zip"
-    zip_path = os.path.join(path_csv, )
+    zip_path = os.path.join(path_csv, zip_filename)
     df_path = os.path.join(path_csv, "photos.tsv000")
        
     if not os.path.exists(path_csv):
