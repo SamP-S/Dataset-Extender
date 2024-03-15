@@ -88,10 +88,10 @@ def post_processing(img):
     if int(CFG["POSTPROCESS"]["gaussian_noise"]):
         g_min = float(CFG["POSTPROCESS"]["gaussian_strength_min"])
         g_max = float(CFG["POSTPROCESS"]["gaussian_strength_max"])
-        g_strength = (r.random() * (g_max - g_min)) + g_min
+        g_strength = r.uniform(g_min, g_max)
         g_std_min = float(CFG["POSTPROCESS"]["gaussian_std_min"])
         g_std_max = float(CFG["POSTPROCESS"]["gaussian_std_max"])
-        g_std = (r.random() * (g_std_max - g_std_min)) + g_std_min
+        g_std = r.uniform(g_std_min, g_std_max)
         img = gaussian_noise(
             img,
             strength=g_strength,
@@ -133,6 +133,8 @@ def apply_transform(in_path, out_path):
     
     print(f"background @ {bg.shape} : brick @ {img.shape}")
     img = random_insert_image(bg, img)
+    # remove alpha
+    img = img[:, :, :3]
     img = post_processing(img)
     save_img(out_path, img)
             

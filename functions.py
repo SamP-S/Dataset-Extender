@@ -169,8 +169,7 @@ def gaussian_noise(img, strength=1, mean=0, std=20):
     Adds gaussian noise to image according to parameters
     """
     gauss = np.random.normal(mean, std, img.shape)
-    gauss = gauss.reshape(img.shape)
-    noisy = img + gauss * 2
+    noisy = img + gauss * strength
     noisy = np.clip(noisy, 0, 255)
     noisy = noisy.astype(np.uint8)
     return noisy
