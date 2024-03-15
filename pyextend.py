@@ -155,6 +155,7 @@ def dir_search(in_dir, out_dir):
             rel_dir = os.path.basename(root) 
             in_path = os.path.join(root, file)
             for i in range(int(CFG["GENERAL"]["gens_per_base"])):
+                print()
                 filename = base + f"_{i}" + ext
                 out_path = os.path.join(out_dir, rel_dir, filename)
                 apply_transform(in_path, out_path)
