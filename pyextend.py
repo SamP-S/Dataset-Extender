@@ -26,20 +26,19 @@ def load_brick(brick_path):
     out_w = int(CFG["GENERAL"]["output_width"])
     out_h = int(CFG["GENERAL"]["output_height"])
     brick_w, brick_h = out_w, out_h
-    print(f"brick w/h = {brick_w}/{brick_h}")
+    # print(f"brick w/h = {brick_w}/{brick_h}")
 
     if int(CFG["BRICK"]["ar_warping"]):
         ar_mean = float(CFG["BRICK"]["ar_mean"])
         ar_std = float(CFG["BRICK"]["ar_std"])
         ar = r.normalvariate(mu=ar_mean, sigma=ar_std)
-        print(ar)
         if ar >= 1.0:
             brick_w = out_w
             brick_h = int(out_h / ar)
         else:
             brick_w = int(out_w / (2 - ar))
             brick_h = out_w
-    print(f"post ar w/h = {brick_w}/{brick_h}")
+    # print(f"post ar w/h = {brick_w}/{brick_h}")
 
     scl_min = float(CFG["BRICK"]["scale_min"])
     scl_max = float(CFG["BRICK"]["scale_max"])
@@ -47,7 +46,7 @@ def load_brick(brick_path):
     
     brick_w = int(brick_w * scl)
     brick_h = int(brick_h * scl)
-    print(f"post scale w/h = {brick_w}/{brick_h}")
+    # print(f"post scale w/h = {brick_w}/{brick_h}")
     img = cv2.resize(img, (brick_w, brick_h))  
     img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
     bg_colour_min = str_to_int_tuple(CFG["BRICK"]["bg_colour_min"])
@@ -127,7 +126,7 @@ def post_processing(img):
     return img
 
 def apply_transform(in_path, out_path):
-    print(f"DEBUG: Generating @ {out_path}")
+    print(f"DEBUG: Transform {in_path} -> {out_path}")
     
     img = load_brick(in_path)
     bg = load_background()
@@ -139,6 +138,7 @@ def apply_transform(in_path, out_path):
             
 def dir_search(in_dir, out_dir):
     global DIR_COUNT, FILE_COUNT
+    print(f"Run: bricks={in_dir}; output={out_dir}")
     if not os.path.exists(in_dir):
         print(f"ERROR: Can't find input bricks @ {in_dir} -- exiting")
     if not os.path.exists(out_dir):
@@ -179,7 +179,7 @@ def save_cfg():
     }
     CFG["PATHS"] = {
         "bricks": "data/bricks/10_bricks",
-        "backgrounds": "data/backgound",
+        "backgrounds": "data/background",
         "unsplash": "data/unsplash",
         "output": "data/augmented", 
     }
