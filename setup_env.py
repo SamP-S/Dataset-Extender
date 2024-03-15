@@ -6,29 +6,20 @@ import urllib
 import numpy as np
 import cv2
 
-def setup_unsplash(num_photos=1000):
-    
-    # img data paths
-    data_path = "data"
-    imgs_path = os.path.join(data_path, "unsplash")
-    
+def setup_unsplash(path_bg, path_csv, num_photos=1000):
+      
     # unsplash db paths
-    extract_path = "unsplash"
     zip_filename = "unsplash_lite.zip"
-    zip_path = os.path.join(extract_path, zip_filename)
-    df_path = os.path.join(extract_path, "photos.tsv000")
-
-    if not os.path.exists(data_path):
-        print(f"DEBUG: {data_path} directory not found - creating")
-        os.mkdir(data_path)
+    zip_path = os.path.join(path_csv, )
+    df_path = os.path.join(path_csv, "photos.tsv000")
+       
+    if not os.path.exists(path_csv):
+        print(f"DEBUG: {path_csv} directory not found - creating")
+        os.mkdir(path_csv)
         
-    if not os.path.exists(imgs_path):
-        print(f"DEBUG: {imgs_path} directory not found - creating")
-        os.mkdir(imgs_path)
-        
-    if not os.path.exists(extract_path):
-        print(f"DEBUG: {extract_path} directory not found - creating")
-        os.mkdir(extract_path)
+    if not os.path.exists(path_bg):
+        print(f"DEBUG: {path_bg} directory not found - creating")
+        os.mkdir(path_bg)
 
     if not os.path.exists(zip_path):
         print(f"DEBUG: {zip_filename} not found - downloading")
@@ -38,12 +29,12 @@ def setup_unsplash(num_photos=1000):
 
     with zipfile.ZipFile(zip_path) as zf:
         for z_path in zf.namelist():
-            out_path = os.path.join(extract_path, z_path)
+            out_path = os.path.join(path_csv, z_path)
             if not os.path.exists(out_path):
                 print(f"DEBUG: {z_path} not found - extracting")
-                zf.extract(z_path, extract_path)
+                zf.extract(z_path, path_csv)
     
-    if len(os.listdir(imgs_path)) == 0:
+    if len(os.listdir(path_bg)) == 0:
         print("DEBUG: images not found locally - downloading")
         timeout = 20
         u_df = pd.read_csv(df_path, delimiter="\t")
@@ -56,7 +47,7 @@ def setup_unsplash(num_photos=1000):
             
             try:
                 with urllib.request.urlopen(url, timeout=timeout) as url_response:
-                    img_path = os.path.join(imgs_path, f"photo_{idx}.jpg")
+                    img_path = os.path.join(path_bg, f"photo_{idx}.jpg")
                     with open(img_path, "wb") as f:
                         f.write(url_response.read())
                 
