@@ -16,6 +16,9 @@ from setup_env import setup_unsplash
 DIR_COUNT = 0
 FILE_COUNT = 0
 
+def str_to_int_tuple(s):
+    return tuple(map(int, s.split(',')))
+
 def load_brick(brick_path):
     img = load_img(brick_path)
 
@@ -43,7 +46,9 @@ def load_brick(brick_path):
 
     img = cv2.resize(img, (brick_w, brick_h))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
-    img = colour_filter(img, (70, 70, 70, 255), (72, 72, 72, 255))
+    bg_colour_min = str_to_int_tuple(CFG["BRICK"]["bg_colour_min"])
+    bg_colour_max = str_to_int_tuple(CFG["BRICK"]["bg_colour_max"])
+    img = colour_filter(img, bg_colour_min, bg_colour_max)
     return img
 
 def load_background():
@@ -147,14 +152,15 @@ def dir_search(in_dir, out_dir):
                 apply_transform(in_path, out_path)
 
 def load_cfg():
-    global CFG
+    global CFG, CFG_NAME
     CFG = configparser.ConfigParser()
-    if len(sys.argv) == 1:
-        if not os.path.exists("sample.ini"):
-            save_cfg()
-        CFG.read("sample.ini")
-    else:
-        CFG.read(sys.argv[1])
+    path = "sample.ini"
+    if len(sys.argv) != 1:
+        path = sys.argv[1]
+    if not os.path.exists(path):
+        save_cfg()
+    CFG.read(path)
+    CFG_NAME = os.path.basename(path).split(".")[0] 
 
 def save_cfg():
     CFG["GENERAL"] = {
@@ -182,6 +188,9 @@ def save_cfg():
         "scaling": "1",
         "scale_min": "0.5",
         "scale_max": "1.0",
+        
+        "bg_colour_min": "0, 0, 0, 255",
+        "bg_colour_max": "2, 2, 2, 255",
     }
     CFG["POSTPROCESS"] = {
         "sp_bw_noise": "1",
@@ -215,7 +224,13 @@ def main():
     # download background images
     setup_unsplash(path_bg=CFG["PATHS"]["backgrounds"], path_csv=CFG["PATHS"]["unsplash"])
     
-    dir_search(CFG["PATHS"]["bricks"], CFG["PATHS"]["output"])
+    # setup and create output dir
+    if not os.path.exists(CFG["PATHS"]["output"]):
+        os.mkdir(CFG["PATHS"]["output"])
+    out_dir = os.path.join(CFG["PATHS"]["output"], CFG_NAME)
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+    dir_search(CFG["PATHS"]["bricks"], out_dir)
     
     end_app = time.time()
     dt = end_app-start_app
