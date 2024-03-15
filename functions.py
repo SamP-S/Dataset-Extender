@@ -95,7 +95,6 @@ def uniform_scale(img, factor, interp=cv2.INTER_NEAREST):
     cv2.INTER_AREA
     """
     scaled_resolution = (img.shape[0] * factor, img.shape[1] * factor)
-    print(scaled_resolution)
     return cv2.resize(img, scaled_resolution, interpolation=interp)
 
 def scale(img, x_factor, y_factor, interp=cv2.INTER_NEAREST):
@@ -107,7 +106,6 @@ def scale(img, x_factor, y_factor, interp=cv2.INTER_NEAREST):
     cv2.INTER_AREA
     """
     scaled_resolution = (int(img.shape[0] * x_factor), int(img.shape[1] * y_factor))
-    print(scaled_resolution)
     return cv2.resize(img, scaled_resolution, interpolation=interp)
 
 def mix_images(img, img2, ratio=0.2):
@@ -130,7 +128,6 @@ def random_sub_image(img, w, h):
     max_y = img.shape[1] - h
     x = random.randint(0, max_x)
     y = random.randint(0, max_y)
-    print(type(img), img.shape)
     return img[x:x+w, y:y+h]
 
 def random_insert_image(img, img2):
