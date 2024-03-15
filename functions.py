@@ -4,12 +4,25 @@ from matplotlib import pyplot as plt
 import os
 import random
 
+# image and file operations
 def read_img(filepath):
     return cv2.imread(filepath)
 
 def save_img(filepath, img):
     return cv2.imwrite(filepath, img)
-   
+
+def load_dir(path):
+    imgs = []
+    for filename in os.listdir(path):
+        img_path = os.path.join(path, filename)
+        imgs.append(load_image(img_path))
+    return imgs
+
+def display_image(img):
+    plt.imshow(img)
+    plt.show()
+
+# colour operations and spaces
 def colour_mask(img, lower_colour, upper_colour):
     mask = cv2.inRange(img, lower_colour, upper_colour)
     masked = cv2.bitwise_and(img,img, mask=mask)
@@ -30,49 +43,55 @@ def colour_histogram(img):
         plt.xlim([0,256])
     plt.show()
 
-def detect_lines(img):
-    safe = img.copy()
-    edges = cv2.Canny(safe ,50, 150,apertureSize=3)
-    
-    minLineLength=5
-    maxLineGap=5
-    lines = cv2.HoughLinesP(image=edges,rho=1,theta=np.pi/180, threshold=200,lines=np.array([]), minLineLength=minLineLength,maxLineGap=maxLineGap)
+def brightness(img, factor):
+    result = img.copy()
+    result += factor
+    return result
 
-    a,b,c = lines.shape
-    for i in range(a):
-        cv2.line(edges, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (0, 0, 255), 3, cv2.LINE_AA)
-    return edges
+def contrast(img, factor):
+    result = img.copy()
+    result *= factor
+    return result
 
-
-# Rotates on multiples of 90 degrees
-# cv2.ROTATE_90_CLOCKWISE
-# cv2.ROTATE_180
-# cv2.ROTATE_90_COUNTERCLOCKWISE
 def rotate(img, rot):
+    """
+    Rotates on multiples of 90 degrees
+    cv2.ROTATE_90_CLOCKWISE
+    cv2.ROTATE_180
+    cv2.ROTATE_90_COUNTERCLOCKWISE
+    """
     return cv2.rotate(img, rot)
 
-# Scales the image maintaining aspect ratio
-# cv2.INTER_NEAREST
-# cv2.INTER_LINEAR
-# cv2.INTER_CUBIC
-# cv2.INTER_AREA
+
 def uniform_scale(img, factor, interp=cv2.INTER_NEAREST):
+    """
+    Scales the image maintaining aspect ratio
+    cv2.INTER_NEAREST
+    cv2.INTER_LINEAR
+    cv2.INTER_CUBIC
+    cv2.INTER_AREA
+    """
     scaled_resolution = (img.shape[0] * factor, img.shape[1] * factor)
     print(scaled_resolution)
     return cv2.resize(img, scaled_resolution, interpolation=interp)
 
-# Scales the image using seperate scaling factors for each dimension
-# cv2.INTER_NEAREST
-# cv2.INTER_LINEAR
-# cv2.INTER_CUBIC
-# cv2.INTER_AREA
+
 def scale(img, x_factor, y_factor, interp=cv2.INTER_NEAREST):
+    """
+    Scales the image using seperate scaling factors for each dimension
+    cv2.INTER_NEAREST
+    cv2.INTER_LINEAR
+    cv2.INTER_CUBIC
+    cv2.INTER_AREA
+    """
     scaled_resolution = (int(img.shape[0] * x_factor), int(img.shape[1] * y_factor))
     print(scaled_resolution)
     return cv2.resize(img, scaled_resolution, interpolation=interp)
 
-# Adds gaussian noise to image according to parameters
 def gaussian_noise(img, strength=1, mean=0, std=20):
+    """
+    Adds gaussian noise to image according to parameters
+    """
     gauss = np.random.normal(mean, std, img.shape)
     gauss = gauss.reshape(img.shape)
     noisy = img + gauss * 2
@@ -80,10 +99,12 @@ def gaussian_noise(img, strength=1, mean=0, std=20):
     noisy = noisy.astype(np.uint8)
     return noisy
 
-# Adds salt and pepper noise ot image
-# ratio of salt to pepper (higher ration -> more salt)
-# single channel or B & W
 def salt_pepper_noise(img, ratio=0.5, freq=0.05, b_w=False):
+    """
+    Adds salt and pepper noise ot image
+    ratio of salt to pepper (higher ration -> more salt)
+    single channel or B & W
+    """
     noisy = np.copy(img)
     amount = int(freq * img.shape[0] * img.shape[1] * img.shape[2])
     salt = int(ratio * amount)
@@ -102,19 +123,25 @@ def salt_pepper_noise(img, ratio=0.5, freq=0.05, b_w=False):
                 noisy[coord[0]][coord[1]][coord[2]] = 0
     return noisy
 
-# Mix images using linear ratio
 def mix_images(img, img2, ratio=0.2):
+    """
+    Mix images using linear ratio
+    """
     return (img * ratio).astype(np.uint8) + (img2 * (1 - ratio)).astype(np.uint8)
 
-# Insert image at coordinates (no mixing/blending)
 def insert_image(img, img2, x, y):
+    """
+    Insert image at coordinates (no mixing/blending)
+    """
     result = np.copy(img)
     img_subset = img[y: y + img2.shape[1], x: x + img2.shape[0]]
     result[y: y + img2.shape[1], x: x + img2.shape[0]] = blend_images(img_subset, img2)
     return result
 
-# Insert image at random coordinates
 def random_insert_image(img, img2):
+    """
+    Insert image at random coordinates
+    """
     x = random.randint(0, img.shape[0] - img2.shape[0])
     y = random.randint(0, img.shape[1] - img2.shape[1])
     result = np.copy(img)
@@ -122,8 +149,10 @@ def random_insert_image(img, img2):
     result[y: y + img2.shape[1], x: x + img2.shape[0]] = blend_images(img_subset, img2)
     return result
 
-# Blend image into another using transparency 
 def blend_images(img, img2):
+    """
+    Blend image into another using transparency 
+    """
     b1, g1, r1, a1 = cv2.split(img)
     b2, g2, r2, a2 = cv2.split(img2)
     
@@ -142,56 +171,50 @@ def blend_images(img, img2):
     blend = cv2.merge([b, g, r, a])
     return blend
 
-# Set specific colour to transparent
 def remove_colour(img, r, g, b, a):
+    """
+    Set specific colour to transparent
+    """
     result = np.copy(img)
     cells = np.where(np.all(img == [b, g, r, a], axis=-1))
     result[cells[0], cells[1], :] = [b, g, r, 0]
     return result
 
-# Set specific colour range to transparent
 def remove_colour_range(img, c1, c2):
+    """
+    Set specific colour range to transparent
+    """
     mask = cv2.inRange(img, c1, c2) # create the Mask
     mask = 255 - mask  # inverse mask
     return cv2.bitwise_and(img, img, mask=mask)
 
 def poisson_noise(img):
+    """
+    Add poisson noise to image
+    """
     vals = len(np.unique(img))
     vals = 2 ** np.ceil(np.log2(vals))
     noisy = np.random.poisson(img * vals) / float(vals)
     return noisy
 
 def speckle_noise(img):
+    """
+    Add speckle noise
+    """
     row,col,ch = img.shape
     gauss = np.random.randn(row,col,ch)
     gauss = gauss.reshape(row,col,ch)        
     noisy = img + img * gauss
     return noisy
 
-# Load image from file
-# cv2.IMREAD_COLOR
-# cv2.IMREAD_GRAYSCALE 
-# cv2.IMREAD_UNCHANGED
 def load_image(path, colourspace=cv2.IMREAD_COLOR):
-    img = cv2.imread(path, colourspace)
-    return convert_colourspace(img)
-
-def load_dir(path):
-    imgs = []
-    for filename in os.listdir(path):
-        img_path = os.path.join(path, filename)
-        imgs.append(load_image(img_path))
-    return imgs
-
-# NOTE: images are BGR
-def display_image(img):
-    plt.imshow(img)
-    plt.show()
-
-# cv2.COLOR_BGR2RGB
-# cv2.COLOR_RGB2BGR
-def convert_colourspace(img, conversion=cv2.COLOR_RGB2BGRA):
-    return cv2.cvtColor(img, conversion)
+    """
+    Load image from file
+    cv2.IMREAD_COLOR (BGR)
+    cv2.IMREAD_GRAYSCALE (G)
+    cv2.IMREAD_UNCHANGED (BGR)
+    """
+    return cv2.imread(path, colourspace)
 
 def random_sub_image(img, w, h):
     max_x = img.shape[0] - w
